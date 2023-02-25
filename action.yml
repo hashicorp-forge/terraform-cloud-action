@@ -1,0 +1,8 @@
+name: Example Typescript Action
+runs:
+  using: 'node16'
+  main: 'dist/index.js'
+inputs:
+  motd:
+    description: An example input
+    default: 'Hello, World!'

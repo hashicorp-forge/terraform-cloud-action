@@ -1,0 +1,32 @@
+name: lint-test
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  run:
+    runs-on: "ubuntu-latest"
+    name: "Run"
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: npm
+
+      - name: npm ci
+        run: npm ci
+
+      - name: Format Check
+        run: npm run format-check
+
+      - name: Verify
+        run: |
+          npm run build
+          # Fail if "npm run build" generated new changes in dist
+          git update-index --refresh dist/* && git diff-index --quiet HEAD dist
+
+      - name: Test
+        run: npm run test
