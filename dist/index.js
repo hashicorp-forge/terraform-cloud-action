@@ -11387,7 +11387,7 @@ function configureRunCreateOptions(wsID) {
         workspaceID: wsID,
     };
 }
-const REQUIRED_VARIABLES = ["organization", "workspace", "token"];
+const REQUIRED_VARIABLES = ["cleanup", "organization", "workspace", "token"];
 (() => main_awaiter(void 0, void 0, void 0, function* () {
     try {
         const client = configureClient();
@@ -11396,6 +11396,7 @@ const REQUIRED_VARIABLES = ["organization", "workspace", "token"];
                 throw new Error(`Input parameter ${i} is required but not provided.`);
             }
         });
+        core.saveState("cleanup", core.getBooleanInput("cleanup"));
         const ws = yield client.readWorkspace(core.getInput("organization"), core.getInput("workspace"));
         const runner = new Runner(client, ws);
         let run = yield runner.createRun(configureRunCreateOptions(ws.data.id));

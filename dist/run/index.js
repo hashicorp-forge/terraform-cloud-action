@@ -11264,6 +11264,25 @@ class TFEClient {
     }
 }
 
+;// CONCATENATED MODULE: ./src/outputs.ts
+
+function formatOutputs(sv) {
+    const outputsByKey = sv.reduce((acc, output) => {
+        if (output.type === "state-version-outputs") {
+            acc[output.attributes.name] = output.attributes.value;
+            return acc;
+        }
+    }, {});
+    return JSON.stringify(outputsByKey);
+}
+function redactSecrets(sv) {
+    sv.forEach(v => {
+        if (v.attributes.sensitive) {
+            core.setSecret(JSON.stringify(v.attributes.value));
+        }
+    });
+}
+
 ;// CONCATENATED MODULE: ./src/runner.ts
 /**
  * Copyright (c) HashiCorp, Inc.
@@ -11354,6 +11373,7 @@ var run_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _argu
 
 
 
+
 function configureClient() {
     return new TFEClient(core.getInput("hostname"), core.getInput("token"));
 }
@@ -11382,6 +11402,9 @@ const REQUIRED_VARIABLES = ["organization", "workspace", "token"];
         if (core.getBooleanInput("wait")) {
             run = yield runner.waitFor(run);
         }
+        const sv = yield client.readCurrentStateVersion(ws);
+        redactSecrets(sv.included);
+        core.setOutput("workspace-outputs-json", formatOutputs(sv.included));
         DefaultLogger.debug(`Created run ${run.data.id}`);
         core.setOutput("run-id", run.data.id);
     }

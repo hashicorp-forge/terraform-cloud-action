@@ -11374,6 +11374,9 @@ const REQUIRED_VARIABLES = ["organization", "workspace", "token"];
                 throw new Error(`Input parameter ${i} is required but not provided.`);
             }
         });
+        if (!["", "true"].includes(core.getState("cleanup"))) {
+            DefaultLogger.info("Cleanup needs to be set to true for cleanup run to be started.");
+        }
         const ws = yield client.readWorkspace(core.getInput("organization"), core.getInput("workspace"));
         const runner = new Runner(client, ws);
         let run = yield runner.createRun(configureRunCreateOptions(ws.data.id));
