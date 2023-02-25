@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Create infra
-        id: fetch
+        id: tfc
         uses: hashicorp-forge/terraform-cloud-action@v1
         with:
           token: ${{ secrets.TFC_TOKEN }}
@@ -47,8 +47,8 @@ jobs:
           workspace: my-workspace
           cleanup: true
     outputs:
-      foo: ${{ fromJSON(steps.fetch.outputs.workspace-outputs-json).foo }}
-      bar: ${{ fromJSON(steps.fetch.outputs.workspace-outputs-json).bar }}
+      foo: ${{ fromJSON(steps.tfc.outputs.workspace-outputs-json).foo }}
+      bar: ${{ fromJSON(steps.tfc.outputs.workspace-outputs-json).bar }}
 
   tests:
     runs-on: ubuntu-latest
@@ -56,14 +56,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
-      - name: Fetch infra secrets
-        id: fetch
-        uses: hashicorp-forge/terraform-cloud-action/output@v1
-        with:
-          token: ${{ secrets.TFC_TOKEN }}
-          organization: example-org
-          workspace: my-workspace
 
       - name: Tests
         run: go test ./...

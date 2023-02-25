@@ -11193,10 +11193,10 @@ class TFEClient {
     }
     readCurrentStateVersion(workspaceResponse) {
         return __awaiter(this, void 0, void 0, function* () {
-            const path = workspaceResponse.data.relationships["current-state-version"].links
-                .related;
+            const path = `/api/v2/workspaces/${workspaceResponse.data.id}/current-state-version`;
             try {
                 DefaultLogger.debug(`client readCurrentStateVersion ${path}`);
+                const currentStateVersionResponse = yield this.client.get(path);
                 const stateVersionResponse = yield this.client.get(path, {
                     params: {
                         include: "outputs",

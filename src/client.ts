@@ -105,18 +105,18 @@ export class TFEClient {
   public async readCurrentStateVersion(
     workspaceResponse: WorkspaceShowResponse
   ): Promise<CurrentStateVersionWithOutputsResponse> {
-    const path =
-      workspaceResponse.data.relationships["current-state-version"].links
-        .related;
+    const path = `/api/v2/workspaces/${workspaceResponse.data.id}/current-state-version`;
 
     try {
       log.debug(`client readCurrentStateVersion ${path}`);
-      const stateVersionResponse =
-        await this.client.get<CurrentStateVersionWithOutputsResponse>(path, {
-          params: {
-            include: "outputs",
-          },
-        });
+      const currentStateVersionResponse =
+        await this.client.get<CurrentStateVersionWithOutputsResponse>(path);
+
+      const stateVersionResponse = await this.client.get(path, {
+        params: {
+          include: "outputs",
+        },
+      });
 
       log.debug(`client readCurrentStateVersion success`);
       return stateVersionResponse.data;

@@ -42,5 +42,5 @@ outputs:
 
 runs:
   using: 'node16'
-  main: '../dist/index.js'
-  post: '../dist/destroy/index.js'
+  main: './dist/workflow/index.js'
+  post: './dist/destroy/index.js'

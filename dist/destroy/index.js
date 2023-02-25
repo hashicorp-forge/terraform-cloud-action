@@ -11193,10 +11193,10 @@ class TFEClient {
     }
     readCurrentStateVersion(workspaceResponse) {
         return __awaiter(this, void 0, void 0, function* () {
-            const path = workspaceResponse.data.relationships["current-state-version"].links
-                .related;
+            const path = `/api/v2/workspaces/${workspaceResponse.data.id}/current-state-version`;
             try {
                 DefaultLogger.debug(`client readCurrentStateVersion ${path}`);
+                const currentStateVersionResponse = yield this.client.get(path);
                 const stateVersionResponse = yield this.client.get(path, {
                     params: {
                         include: "outputs",
@@ -11380,7 +11380,7 @@ const REQUIRED_VARIABLES = ["organization", "workspace", "token"];
         const ws = yield client.readWorkspace(core.getInput("organization"), core.getInput("workspace"));
         const runner = new Runner(client, ws);
         let run = yield runner.createRun(configureRunCreateOptions(ws.data.id));
-        if (core.getBooleanInput("wait")) {
+        if (core.getInput("wait") !== "" && core.getBooleanInput("wait")) {
             run = yield runner.waitFor(run);
         }
         DefaultLogger.debug(`Created run ${run.data.id}`);

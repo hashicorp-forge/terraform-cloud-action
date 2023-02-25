@@ -47,7 +47,7 @@ const REQUIRED_VARIABLES = ["organization", "workspace", "token"];
     const runner = new Runner(client, ws);
     let run = await runner.createRun(configureRunCreateOptions(ws.data.id));
 
-    if (core.getBooleanInput("wait")) {
+    if (core.getInput("wait") !== "" && core.getBooleanInput("wait")) {
       run = await runner.waitFor(run);
     }
 
