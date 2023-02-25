@@ -11264,25 +11264,6 @@ class TFEClient {
     }
 }
 
-;// CONCATENATED MODULE: ./src/outputs.ts
-
-function formatOutputs(sv) {
-    const outputsByKey = sv.reduce((acc, output) => {
-        if (output.type === "state-version-outputs") {
-            acc[output.attributes.name] = output.attributes.value;
-            return acc;
-        }
-    }, {});
-    return JSON.stringify(outputsByKey);
-}
-function redactSecrets(sv) {
-    sv.forEach(v => {
-        if (v.attributes.sensitive) {
-            core.setSecret(JSON.stringify(v.attributes.value));
-        }
-    });
-}
-
 ;// CONCATENATED MODULE: ./src/runner.ts
 /**
  * Copyright (c) HashiCorp, Inc.
@@ -11355,12 +11336,12 @@ class Runner {
     }
 }
 
-;// CONCATENATED MODULE: ./src/main.ts
+;// CONCATENATED MODULE: ./src/destroy.ts
 /**
  * Copyright (c) HashiCorp, Inc.
  * SPDX-License-Identifier: MPL-2.0
  */
-var main_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+var destroy_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -11373,22 +11354,19 @@ var main_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arg
 
 
 
-
 function configureClient() {
     return new TFEClient(core.getInput("hostname"), core.getInput("token"));
 }
 function configureRunCreateOptions(wsID) {
     return {
         autoApply: core.getBooleanInput("auto-apply"),
-        isDestroy: false,
+        isDestroy: true,
         message: core.getInput("message"),
-        replaceAddrs: core.getMultilineInput("replace-addrs"),
-        targetAddrs: core.getMultilineInput("target-addrs"),
         workspaceID: wsID,
     };
 }
 const REQUIRED_VARIABLES = ["organization", "workspace", "token"];
-(() => main_awaiter(void 0, void 0, void 0, function* () {
+(() => destroy_awaiter(void 0, void 0, void 0, function* () {
     try {
         const client = configureClient();
         REQUIRED_VARIABLES.forEach(i => {
@@ -11399,11 +11377,10 @@ const REQUIRED_VARIABLES = ["organization", "workspace", "token"];
         const ws = yield client.readWorkspace(core.getInput("organization"), core.getInput("workspace"));
         const runner = new Runner(client, ws);
         let run = yield runner.createRun(configureRunCreateOptions(ws.data.id));
-        run = yield runner.waitFor(run);
+        if (core.getBooleanInput("wait")) {
+            run = yield runner.waitFor(run);
+        }
         DefaultLogger.debug(`Created run ${run.data.id}`);
-        const sv = yield client.readCurrentStateVersion(ws);
-        redactSecrets(sv.included);
-        core.setOutput("workspace-outputs-json", formatOutputs(sv.included));
         core.setOutput("run-id", run.data.id);
     }
     catch (error) {

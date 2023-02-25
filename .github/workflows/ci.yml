@@ -1,4 +1,4 @@
-name: lint-test
+name: CI
 on:
   push:
     branches:
@@ -6,9 +6,29 @@ on:
   pull_request:
 
 jobs:
-  run:
+  mockinfra:
+    - uses: ./
+      with:
+        cleanup: true
+        token: ${{ secrets.TFC_TOKEN }}
+        organization: bcroft
+        workspace: test-terraform-apply-action
+      outputs:
+        workspace-outputs-json: ${{ steps.fetch.outputs.workspace-outputs-json }}
+
+  e2e:
     runs-on: "ubuntu-latest"
-    name: "Run"
+    name: "E2E Testing"
+    needs: [ mockinfra ]
+    steps:
+      - name: Expectations
+      - run: |
+      echo ${{ fromJSON(needs.mockinfra.outputs.workspace-outputs-json) }}
+      sh -c '[[ "${{ fromJSON(needs.mockinfra.outputs.workspace-outputs-json).string }}" = "string" ]] && echo PASS || echo FAIL && exit 1'
+
+  lint-test:
+    runs-on: "ubuntu-latest"
+    name: "List & Test"
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3

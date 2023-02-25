@@ -11283,12 +11283,12 @@ function redactSecrets(sv) {
     });
 }
 
-;// CONCATENATED MODULE: ./src/runner.ts
+;// CONCATENATED MODULE: ./src/output.ts
 /**
  * Copyright (c) HashiCorp, Inc.
  * SPDX-License-Identifier: MPL-2.0
  */
-var runner_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+var output_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -11297,114 +11297,19 @@ var runner_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _a
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-
-const pollIntervalRunMs = 4000;
-const pollIntervalResourcesMs = 1000;
-function sleep(interval) {
-    return runner_awaiter(this, void 0, void 0, function* () {
-        yield new Promise(resolve => setTimeout(resolve, interval));
-    });
-}
-class Runner {
-    constructor(client, workspace) {
-        this.client = client;
-        this.workspace = workspace;
-    }
-    waitFor(run) {
-        return runner_awaiter(this, void 0, void 0, function* () {
-            run = yield this.pollWaitForRun(run);
-            yield this.pollWaitForResources(this.workspace);
-            return run;
-        });
-    }
-    createRun(opts) {
-        return runner_awaiter(this, void 0, void 0, function* () {
-            opts.workspaceID = this.workspace.data.id;
-            return yield this.client.createRun(opts);
-        });
-    }
-    pollWaitForResources(ws) {
-        return runner_awaiter(this, void 0, void 0, function* () {
-            let sv = yield this.client.readCurrentStateVersion(ws);
-            DefaultLogger.info(`Waiting for workspace ${ws.data.id} to process resources...`);
-            while (!sv.data.attributes["resources-processed"]) {
-                yield sleep(pollIntervalResourcesMs);
-                sv = yield this.client.readCurrentStateVersion(ws);
-            }
-        });
-    }
-    pollWaitForRun(run) {
-        return runner_awaiter(this, void 0, void 0, function* () {
-            poll: while (true) {
-                switch (run.data.attributes.status) {
-                    case "canceled":
-                    case "force_canceled":
-                    case "errored":
-                    case "discarded":
-                        throw new Error(`run exited unexpectedly with status: ${run.data.attributes.status}`);
-                    case "planned_and_finished":
-                    case "applied":
-                        break poll; // Without label, only breaks the switch statement
-                }
-                DefaultLogger.info(`Waiting for run ${run.data.id} to complete, status was '${run.data.attributes.status}'...`);
-                yield sleep(pollIntervalRunMs);
-                run = yield this.client.readRun(run.data.id);
-            }
-            return run;
-        });
-    }
-}
-
-;// CONCATENATED MODULE: ./src/main.ts
-/**
- * Copyright (c) HashiCorp, Inc.
- * SPDX-License-Identifier: MPL-2.0
- */
-var main_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-
-
 
 
 
 function configureClient() {
     return new TFEClient(core.getInput("hostname"), core.getInput("token"));
 }
-function configureRunCreateOptions(wsID) {
-    return {
-        autoApply: core.getBooleanInput("auto-apply"),
-        isDestroy: false,
-        message: core.getInput("message"),
-        replaceAddrs: core.getMultilineInput("replace-addrs"),
-        targetAddrs: core.getMultilineInput("target-addrs"),
-        workspaceID: wsID,
-    };
-}
-const REQUIRED_VARIABLES = ["organization", "workspace", "token"];
-(() => main_awaiter(void 0, void 0, void 0, function* () {
+(() => output_awaiter(void 0, void 0, void 0, function* () {
     try {
         const client = configureClient();
-        REQUIRED_VARIABLES.forEach(i => {
-            if (core.getInput(i) === "") {
-                throw new Error(`Input parameter ${i} is required but not provided.`);
-            }
-        });
-        const ws = yield client.readWorkspace(core.getInput("organization"), core.getInput("workspace"));
-        const runner = new Runner(client, ws);
-        let run = yield runner.createRun(configureRunCreateOptions(ws.data.id));
-        run = yield runner.waitFor(run);
-        DefaultLogger.debug(`Created run ${run.data.id}`);
-        const sv = yield client.readCurrentStateVersion(ws);
+        const workspace = yield client.readWorkspace(core.getInput("organization"), core.getInput("workspace"));
+        const sv = yield client.readCurrentStateVersion(workspace);
         redactSecrets(sv.included);
         core.setOutput("workspace-outputs-json", formatOutputs(sv.included));
-        core.setOutput("run-id", run.data.id);
     }
     catch (error) {
         core.setFailed(error.message);

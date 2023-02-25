@@ -1,8 +1,10 @@
 # Copyright (c) HashiCorp, Inc.
 # SPDX-License-Identifier: MPL-2.0
 
-name: Terraform Cloud Action
-description: 'Use this action to create AND DESTROY infrastructure within a single workflow.'
+name: Terraform Cloud Run
+runs:
+  using: 'node16'
+  main: '../dist/run/index.js'
 inputs:
   hostname:
     required: false
@@ -16,13 +18,18 @@ inputs:
   workspace:
     description: "The Terraform Cloud/Terraform Enterprise workspace to fetch outputs from."
     required: true
-  cleanup:
-    description: "If set to true, the action will run a DESTROY PLAN on the workspace at the end of the workflow."
-    required: true
-  auto-apply:
-    description: "If set to true, applies changes when a Terraform plan is successful. Defaults to true."
+  wait:
+    description: "If set, waits for the run to terminate and resources to be processed before the action finishes. Defaults to true."
     required: false
     default: true
+  auto-apply:
+    description: "If set, applies changes when a Terraform plan is successful. Defaults to true."
+    required: false
+    default: true
+  is-destroy:
+    description: "If set, a destroy plan will be run. Defaults to false."
+    required: false
+    default: false
   message:
     required: false
     description: "A custom message to associate with the run."
@@ -32,15 +39,6 @@ inputs:
     required: false
   target-addrs:
     description: "Multi-line list of resource addresses that Terraform should focus its planning efforts on. Use one address per line."
-    required: false
-
 outputs:
   run-id:
-    description: "The id of the apply run"
-  workspace-outputs-json:
-    description: "The new workspace outputs, expressed as a JSON string, after the apply run. Use fromJSON to decode."
-
-runs:
-  using: 'node16'
-  main: '../dist/index.js'
-  post: '../dist/destroy/index.js'
+    description: "The id of the run that was created"
