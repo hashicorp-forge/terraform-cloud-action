@@ -12,11 +12,6 @@ output "number" {
   value = 3.14159
 }
 
-output "string-sensitive" {
-  value = "string-sensitive"
-  sensitive = true
-}
-
 output "tuple" {
   value = ["hello", "list"]
 }
