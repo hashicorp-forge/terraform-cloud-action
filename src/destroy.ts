@@ -34,8 +34,10 @@ const REQUIRED_VARIABLES = ["organization", "workspace", "token"];
       }
     });
 
-    if(!["", "true"].includes(core.getState("cleanup"))) {
-      log.info("Cleanup needs to be set to true for cleanup run to be started.")
+    if (!["", "true"].includes(core.getState("cleanup"))) {
+      log.info(
+        "Cleanup needs to be set to true for cleanup run to be started."
+      );
     }
 
     const ws = await client.readWorkspace(

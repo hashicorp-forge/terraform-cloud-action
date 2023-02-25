@@ -1,4 +1,4 @@
-import { StateVersionOutputData } from "./client"
+import { StateVersionOutputData } from "./client";
 import * as core from "@actions/core";
 
 type outputByKey = { [varName: string]: any };
