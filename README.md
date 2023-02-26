@@ -1,31 +1,12 @@
-# Terraform Cloud action
+# Terraform Cloud actions
 
-Create and destroy infrastructure by creating an apply run **followed by a destroy run** within a GitHub action workflow.
+- [apply](apply/): Create a plan and apply run and optionally auto-apply it and wait for it to complete using the latest configuration version of a workspace.
+- [outputs](outputs/): Get the outputs from a workspace.
+- [destroy](destroy/): Create a destroy run and optionally auto-apply it and wait for it to complete.
 
-## Documentation
----
-
-### Inputs
-
-- `token` (**Required**): Terraform Cloud API access token
-- `organization` (**Required**): The organization
-- `workspace` (**Required**): The name of the workspace
-- `cleanup` (**Required**): If set, the destroy run will be applied. This input should usually be true but exists to make sure you understand that infrastructure will be destroyed at the end of the workflow.
-- `hostname` (**Optional**): The hostname (if not using Terraform Cloud) of the Terraform Enterprise instance. Defaults to `app.terraform.io`
-- `auto-apply` (**Optional**): If set, applies changes when a Terraform plan is successful. Defaults to true.
-- `message` (**Optional**): A custom message to associate with the run. Default to "Run created by GitHub action"
-- `replace-addrs` (**Optional**): Multi-line list of resource addresses to be replaced. Use one address per line.
-- `target-addrs` (**Optional**): Multi-line list of resource addresses that Terraform should focus its planning efforts on. Use one address per line.
-
-[Read more about the Runs API](https://developer.hashicorp.com/terraform/cloud-docs/api-docs/run#create-a-run)
-
-### Outputs
-
-- `run-id`: The run ID for the created run.
+Using these three actions, you can assemble a workflow to create, use, and destroy infrastructure managed by Terraform Cloud.
 
 ## Example Usage
-
-You can use this action in conjunction with `hashicorp-forge/terraform-cloud-outputs-action` to create infrastructure and fetch new outputs to help utilize it:
 
 ```yaml
 name: Nightly Test
@@ -39,35 +20,48 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Create infra
-        id: fetch
-        uses: hashicorp-forge/terraform-cloud-action@v1
+        uses: hashicorp-forge/terraform-cloud-action/apply@v1
         with:
           token: ${{ secrets.TFC_TOKEN }}
           organization: example-org
           workspace: my-workspace
-          cleanup: true
-    outputs:
-      foo: ${{ fromJSON(steps.fetch.outputs.workspace-outputs-json).foo }}
-      bar: ${{ fromJSON(steps.fetch.outputs.workspace-outputs-json).bar }}
+          wait: true
+          replace-addrs: |
+            aws_instance.web
 
   tests:
     runs-on: ubuntu-latest
     needs: [ infra ]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Fetch infra secrets
+      # If your outputs contain secrets, it's better to fetch the outputs within the job
+      # that is utilizing them. terraform-cloud-actions redacts sensitive output values and
+      # therefore it is not possible to make those values job outputs.
+      - name: Fetch Infra Secrets
         id: fetch
-        uses: hashicorp-forge/terraform-cloud-action/output@v1
+        uses: hashicorp-forge/terraform-cloud-action/outputs@v1
         with:
           token: ${{ secrets.TFC_TOKEN }}
           organization: example-org
           workspace: my-workspace
 
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Tests
         run: go test ./...
         env:
-          SOME_FOO: ${{ needs.infra.outputs.foo }}
-          SOME_BAR: ${{ needs.infra.outputs.bar }}
+          SOME_FOO: ${{ fromJSON(steps.fetch.outputs.workspace-outputs-json).foo }}
+          SOME_BAR: ${{ fromJSON(steps.fetch.outputs.workspace-outputs-json).bar }}
+
+  destroy-infra:
+    runs-on: ubuntu-latest
+    needs: [ tests ]
+    if: "${{ always() }}"
+    steps:
+      - name: Destroy infra
+        uses: hashicorp-forge/terraform-cloud-action/destroy@v1
+        with:
+          token: ${{ secrets.TFC_TOKEN }}
+          organization: example-org
+          workspace: my-workspace
 ```

@@ -5,7 +5,6 @@
 
 import * as core from "@actions/core";
 import { RunCreateOptions, TFEClient } from "./client";
-import { DefaultLogger as log } from "./logger";
 
 import { Runner } from "./runner";
 
@@ -34,12 +33,6 @@ const REQUIRED_VARIABLES = ["organization", "workspace", "token"];
       }
     });
 
-    if (!["", "true"].includes(core.getState("cleanup"))) {
-      log.info(
-        "Cleanup needs to be set to true for cleanup run to be started."
-      );
-    }
-
     const ws = await client.readWorkspace(
       core.getInput("organization"),
       core.getInput("workspace")
@@ -51,7 +44,6 @@ const REQUIRED_VARIABLES = ["organization", "workspace", "token"];
       run = await runner.waitFor(run);
     }
 
-    log.debug(`Created run ${run.data.id}`);
     core.setOutput("run-id", run.data.id);
   } catch (error) {
     core.setFailed(error.message);

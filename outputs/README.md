@@ -1,4 +1,4 @@
-# Output action
+# Outputs action
 
 A GitHub Action step that fetches outputs from a Terraform Cloud workspace.
 
@@ -53,6 +53,7 @@ jobs:
           token: ${{ secrets.TFC_TOKEN }}
           organization: "example-org"
           workspace: "my-tflocal-workspace"
+
       - name: Tests
         run: go test ./...
         env:

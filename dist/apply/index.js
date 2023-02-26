@@ -11264,25 +11264,6 @@ class TFEClient {
     }
 }
 
-;// CONCATENATED MODULE: ./src/outputs.ts
-
-function formatOutputs(sv) {
-    const outputsByKey = sv.reduce((acc, output) => {
-        if (output.type === "state-version-outputs") {
-            acc[output.attributes.name] = output.attributes.value;
-            return acc;
-        }
-    }, {});
-    return JSON.stringify(outputsByKey);
-}
-function redactSecrets(sv) {
-    sv.forEach(v => {
-        if (v.attributes.sensitive) {
-            core.setSecret(JSON.stringify(v.attributes.value));
-        }
-    });
-}
-
 ;// CONCATENATED MODULE: ./src/runner.ts
 /**
  * Copyright (c) HashiCorp, Inc.
@@ -11355,12 +11336,12 @@ class Runner {
     }
 }
 
-;// CONCATENATED MODULE: ./src/run.ts
+;// CONCATENATED MODULE: ./src/apply.ts
 /**
  * Copyright (c) HashiCorp, Inc.
  * SPDX-License-Identifier: MPL-2.0
  */
-var run_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+var apply_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -11369,8 +11350,6 @@ var run_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _argu
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-
-
 
 
 
@@ -11388,7 +11367,7 @@ function configureRunCreateOptions(wsID) {
     };
 }
 const REQUIRED_VARIABLES = ["organization", "workspace", "token"];
-(() => run_awaiter(void 0, void 0, void 0, function* () {
+(() => apply_awaiter(void 0, void 0, void 0, function* () {
     try {
         const client = configureClient();
         REQUIRED_VARIABLES.forEach(i => {
@@ -11402,10 +11381,6 @@ const REQUIRED_VARIABLES = ["organization", "workspace", "token"];
         if (core.getBooleanInput("wait")) {
             run = yield runner.waitFor(run);
         }
-        const sv = yield client.readCurrentStateVersion(ws);
-        redactSecrets(sv.included);
-        core.setOutput("workspace-outputs-json", formatOutputs(sv.included));
-        DefaultLogger.debug(`Created run ${run.data.id}`);
         core.setOutput("run-id", run.data.id);
     }
     catch (error) {
