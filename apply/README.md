@@ -1,9 +1,8 @@
-# Run action
+# Apply action
 
-A GitHub Action that creates an apply or destroy run in a Terraform Cloud workspace. Use this in conjunction with [hashicorp-forge/terraform-cloud-action/output](https://github.com/hashicorp-forge/terraform-cloud-action/output) to assemble GitHub Action pipelines using infrastructure managed by Terraform Cloud.
+A GitHub Action that creates an apply (or destroy) run in a Terraform Cloud workspace. Use this in conjunction with the [outputs action](../outputs) to assemble GitHub Action pipelines using infrastructure managed by Terraform Cloud.
 
 ## Documentation
----
 
 ### Inputs
 
@@ -26,8 +25,6 @@ A GitHub Action that creates an apply or destroy run in a Terraform Cloud worksp
 
 ## Example Usage
 
-You can use this action in conjunction with `hashicorp-forge/terraform-cloud-outputs-action` to create infrastructure and fetch new outputs to help utilize it:
-
 ```yaml
 name: Nightly Test
 on:
@@ -40,46 +37,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Create infra
-        id: fetch
-        uses: hashicorp-forge/terraform-cloud-action/run@v1
+        id: infra
+        uses: hashicorp-forge/terraform-cloud-action/apply@v1
         with:
           token: ${{ secrets.TFC_TOKEN }}
           organization: example-org
           workspace: my-workspace
-          wait: true
-
-  tests:
-    runs-on: ubuntu-latest
-    needs: [infra]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Fetch infra secrets
-        id: fetch
-        uses: hashicorp-forge/terraform-cloud-action/output@v1
-        with:
-          token: ${{ secrets.TFC_TOKEN }}
-          organization: example-org
-          workspace: my-workspace
-
-      - name: Tests
-        run: go test ./...
-        env:
-          SOME_FOO: ${{ fromJSON(steps.fetch.outputs.workspace-outputs-json).foo }}
-          SOME_BAR: ${{ fromJSON(steps.fetch.outputs.workspace-outputs-json).bar }}
-
-  cleanup:
-    runs-on: ubuntu-latest
-    needs: [tests]
-    if: "${{ always() }}"
-    steps:
-      - name: Destroy infra
-        uses: hashicorp-forge/terraform-cloud-action/run@v1
-        with:
-          token: ${{ secrets.TFC_TOKEN }}
-          organization: example-org
-          workspace: my-workspace
-          is-destroy: true
           wait: true
 ```

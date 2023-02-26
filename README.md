@@ -65,3 +65,7 @@ jobs:
           organization: example-org
           workspace: my-workspace
 ```
+
+## In Action
+
+The [actions](actions) in this repo use themselves [in a CI workflow](blob/main/.github/workflows/ci.yml)

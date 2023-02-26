@@ -1,9 +1,8 @@
 # Destroy action
 
-A GitHub Action that creates a destroy run in a Terraform Cloud workspace. Use this in conjunction with [hashicorp-forge/terraform-cloud-action/output](https://github.com/hashicorp-forge/terraform-cloud-action/output) to assemble GitHub Action pipelines using infrastructure managed by Terraform Cloud.
+A GitHub Action that creates a destroy run in a Terraform Cloud workspace. Usually used to tear down infrastructure that you created with the apply action.
 
 ## Documentation
----
 
 ### Inputs
 
@@ -14,8 +13,6 @@ A GitHub Action that creates a destroy run in a Terraform Cloud workspace. Use t
 - `wait` (**Optional**): If set, waits for the run to terminate and resources to be processed before the action finishes. Defaults to false.
 - `auto-apply` (**Optional**): If set, applies changes when a Terraform plan is successful. Defaults to true.
 - `message` (**Optional**): A custom message to associate with the run. Default to "Run created by GitHub action"
-- `replace-addrs` (**Optional**): Multi-line list of resource addresses to be replaced. Use one address per line.
-- `target-addrs` (**Optional**): Multi-line list of resource addresses that Terraform should focus its planning efforts on. Use one address per line.
 
 [Read more about the Runs API](https://developer.hashicorp.com/terraform/cloud-docs/api-docs/run#create-a-run)
 
@@ -25,8 +22,6 @@ A GitHub Action that creates a destroy run in a Terraform Cloud workspace. Use t
 
 ## Example Usage
 
-You can use this action in conjunction with `hashicorp-forge/terraform-cloud-outputs-action` to create infrastructure and fetch new outputs to help utilize it:
-
 ```yaml
 name: Nightly Test
 on:
@@ -35,46 +30,15 @@ on:
     - cron: 0 0 * * *
 
 jobs:
-  infra:
+  # .. create and use infra in jobs
+
+  destroy-infra:
+    name: Destroy infrastructure
     runs-on: ubuntu-latest
-    steps:
-      - name: Create infra
-        id: fetch
-        uses: hashicorp-forge/terraform-cloud-action/run@v1
-        with:
-          token: ${{ secrets.TFC_TOKEN }}
-          organization: example-org
-          workspace: my-workspace
-          wait: true
-
-  tests:
-    runs-on: ubuntu-latest
-    needs: [infra]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Fetch infra secrets
-        id: fetch
-        uses: hashicorp-forge/terraform-cloud-action/output@v1
-        with:
-          token: ${{ secrets.TFC_TOKEN }}
-          organization: example-org
-          workspace: my-workspace
-
-      - name: Tests
-        run: go test ./...
-        env:
-          SOME_FOO: ${{ fromJSON(steps.fetch.outputs.workspace-outputs-json).foo }}
-          SOME_BAR: ${{ fromJSON(steps.fetch.outputs.workspace-outputs-json).bar }}
-
-  cleanup:
-    runs-on: ubuntu-latest
-    needs: [tests]
+    needs: [ tests ]
     if: "${{ always() }}"
     steps:
-      - name: Destroy infra
-        uses: hashicorp-forge/terraform-cloud-action/destroy@v1
+      - uses: hashicorp-forge/terraform-cloud-action/destroy@v1
         with:
           token: ${{ secrets.TFC_TOKEN }}
           organization: example-org

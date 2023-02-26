@@ -17,6 +17,7 @@ jobs:
         with:
           token: ${{ secrets.TFC_TOKEN }}
           organization: ${{ secrets.TFC_ORGANIZATION }}
+          # The workspace is set up to use .github/workspace/main.tf in the main branch
           workspace: test-terraform-cloud-action
 
   e2e:
