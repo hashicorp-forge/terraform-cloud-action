@@ -68,4 +68,4 @@ jobs:
 
 ## In Action
 
-The [actions](actions) in this repo use themselves [in a CI workflow](blob/main/.github/workflows/ci.yml)
+The [actions](https://github.com/brandonc/terraform-cloud-action/actions/workflows/ci.yml) in this repo use themselves [in a CI workflow](.github/workflows/ci.yml)
