@@ -7,30 +7,64 @@ on:
 
 jobs:
   mockinfra:
-    - uses: ./
-      with:
-        cleanup: true
-        token: ${{ secrets.TFC_TOKEN }}
-        organization: bcroft
-        workspace: test-terraform-apply-action
-      outputs:
-        workspace-outputs-json: ${{ steps.fetch.outputs.workspace-outputs-json }}
+    runs-on: "ubuntu-latest"
+    name: "E2E Mock Infra"
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: ./apply
+        id: run
+        with:
+          token: ${{ secrets.TFC_TOKEN }}
+          organization: ${{ secrets.TFC_ORGANIZATION }}
+          workspace: test-terraform-cloud-action
 
   e2e:
     runs-on: "ubuntu-latest"
-    name: "E2E Testing"
+    name: "E2E Test Outputs"
     needs: [ mockinfra ]
     steps:
-      - name: Expectations
-      - run: |
-      echo ${{ fromJSON(needs.mockinfra.outputs.workspace-outputs-json) }}
-      sh -c '[[ "${{ fromJSON(needs.mockinfra.outputs.workspace-outputs-json).string }}" = "string" ]] && echo PASS || echo FAIL && exit 1'
+      - uses: actions/checkout@v3
+
+      - name: Fetch outputs
+        id: fetch
+        uses: ./outputs
+        with:
+          token: ${{ secrets.TFC_TOKEN }}
+          organization: ${{ secrets.TFC_ORGANIZATION }}
+          workspace: test-terraform-cloud-action
+
+      - name: Assertions
+        env:
+          JSON_DATA: ${{ steps.fetch.outputs.workspace-outputs-json }}
+        run: |
+          [[ $(jq -n "$JSON_DATA" | jq .number -re) = "3.14159" ]] && echo PASS || (echo FAIL && exit 1)
+          [[ $(jq -n "$JSON_DATA" | jq .string -re) = "string" ]] && echo PASS || (echo FAIL && exit 1)
+          [[ $(jq -n "$JSON_DATA" | jq .tuple[0] -re) = "hello" ]] && echo PASS || (echo FAIL && exit 1)
+          [[ $(jq -n "$JSON_DATA" | jq .tuple[1] -re) = "list" ]] && echo PASS || (echo FAIL && exit 1)
+          [[ $(jq -n "$JSON_DATA" | jq .object.hello -re) = "object" ]] && echo PASS || (echo FAIL && exit 1)
+
+  destroy-infra:
+    runs-on: ubuntu-latest
+    name: E2E Destroy Infra
+    needs: [ e2e ]
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Destroy mock infra
+        uses: ./destroy
+        with:
+          token: ${{ secrets.TFC_TOKEN }}
+          organization: ${{ secrets.TFC_ORGANIZATION }}
+          workspace: test-terraform-cloud-action
+          wait: true # default is false
 
   lint-test:
     runs-on: "ubuntu-latest"
-    name: "List & Test"
+    name: "Lint & Test"
     steps:
       - uses: actions/checkout@v3
+
       - uses: actions/setup-node@v3
         with:
           node-version: 16
@@ -46,7 +80,7 @@ jobs:
         run: |
           npm run build
           # Fail if "npm run build" generated new changes in dist
-          git update-index --refresh dist/* && git diff-index --quiet HEAD dist
+          git update-index --refresh dist/**/* && git diff-index --quiet HEAD dist
 
       - name: Test
         run: npm run test

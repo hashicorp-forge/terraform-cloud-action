@@ -5,8 +5,6 @@
 
 import * as core from "@actions/core";
 import { RunCreateOptions, TFEClient } from "./client";
-import { DefaultLogger as log } from "./logger";
-import { formatOutputs, redactSecrets } from "./outputs";
 
 import { Runner } from "./runner";
 
@@ -48,11 +46,6 @@ const REQUIRED_VARIABLES = ["organization", "workspace", "token"];
       run = await runner.waitFor(run);
     }
 
-    const sv = await client.readCurrentStateVersion(ws);
-
-    redactSecrets(sv.included);
-    core.setOutput("workspace-outputs-json", formatOutputs(sv.included));
-    log.debug(`Created run ${run.data.id}`);
     core.setOutput("run-id", run.data.id);
   } catch (error) {
     core.setFailed(error.message);

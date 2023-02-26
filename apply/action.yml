@@ -1,10 +1,10 @@
 # Copyright (c) HashiCorp, Inc.
 # SPDX-License-Identifier: MPL-2.0
 
-name: Terraform Cloud Run
+name: Terraform Cloud Apply
 runs:
   using: 'node16'
-  main: '../dist/run/index.js'
+  main: '../dist/apply/index.js'
 inputs:
   hostname:
     required: false
