@@ -7073,6 +7073,11 @@ const toJSONObject = (obj) => {
   return visit(obj, 0);
 }
 
+const isAsyncFn = kindOfTest('AsyncFunction');
+
+const isThenable = (thing) =>
+  thing && (isObject(thing) || isFunction(thing)) && isFunction(thing.then) && isFunction(thing.catch);
+
 /* harmony default export */ const utils = ({
   isArray,
   isArrayBuffer,
@@ -7122,7 +7127,9 @@ const toJSONObject = (obj) => {
   ALPHABET,
   generateString,
   isSpecCompliantForm,
-  toJSONObject
+  toJSONObject,
+  isAsyncFn,
+  isThenable
 });
 
 ;// CONCATENATED MODULE: ./node_modules/axios/lib/core/AxiosError.js
@@ -8476,7 +8483,7 @@ var follow_redirects = __nccwpck_require__(7707);
 ;// CONCATENATED MODULE: external "zlib"
 const external_zlib_namespaceObject = require("zlib");
 ;// CONCATENATED MODULE: ./node_modules/axios/lib/env/data.js
-const VERSION = "1.3.6";
+const VERSION = "1.4.0";
 ;// CONCATENATED MODULE: ./node_modules/axios/lib/helpers/parseProtocol.js
 
 
@@ -8989,7 +8996,26 @@ class ZlibHeaderTransformStream extends external_stream_.Transform {
 
 /* harmony default export */ const helpers_ZlibHeaderTransformStream = (ZlibHeaderTransformStream);
 
+;// CONCATENATED MODULE: ./node_modules/axios/lib/helpers/callbackify.js
+
+
+const callbackify = (fn, reducer) => {
+  return utils.isAsyncFn(fn) ? function (...args) {
+    const cb = args.pop();
+    fn.apply(this, args).then((value) => {
+      try {
+        reducer ? cb(null, ...reducer(value)) : cb(null, value);
+      } catch (err) {
+        cb(err);
+      }
+    }, cb);
+  } : fn;
+}
+
+/* harmony default export */ const helpers_callbackify = (callbackify);
+
 ;// CONCATENATED MODULE: ./node_modules/axios/lib/adapters/http.js
+
 
 
 
@@ -9138,12 +9164,23 @@ const wrapAsync = (asyncExecutor) => {
 /*eslint consistent-return:0*/
 /* harmony default export */ const http = (isHttpAdapterSupported && function httpAdapter(config) {
   return wrapAsync(async function dispatchHttpRequest(resolve, reject, onDone) {
-    let {data} = config;
+    let {data, lookup, family} = config;
     const {responseType, responseEncoding} = config;
     const method = config.method.toUpperCase();
     let isDone;
     let rejected = false;
     let req;
+
+    if (lookup && utils.isAsyncFn(lookup)) {
+      lookup = helpers_callbackify(lookup, (entry) => {
+        if(utils.isString(entry)) {
+          entry = [entry, entry.indexOf('.') < 0 ? 6 : 4]
+        } else if (!utils.isArray(entry)) {
+          throw new TypeError('lookup async function must return an array [ip: string, family: number]]')
+        }
+        return entry;
+      })
+    }
 
     // temporary internal emitter until the AxiosRequest class will be implemented
     const emitter = new external_events_();
@@ -9370,6 +9407,8 @@ const wrapAsync = (asyncExecutor) => {
       agents: { http: config.httpAgent, https: config.httpsAgent },
       auth,
       protocol,
+      family,
+      lookup,
       beforeRedirect: dispatchBeforeRedirect,
       beforeRedirects: {}
     };
@@ -9830,8 +9869,12 @@ const isXHRAdapterSupported = typeof XMLHttpRequest !== 'undefined';
       }
     }
 
-    if (utils.isFormData(requestData) && (node.isStandardBrowserEnv || node.isStandardBrowserWebWorkerEnv)) {
-      requestHeaders.setContentType(false); // Let the browser set it
+    if (utils.isFormData(requestData)) {
+      if (node.isStandardBrowserEnv || node.isStandardBrowserWebWorkerEnv) {
+        requestHeaders.setContentType(false); // Let the browser set it
+      } else {
+        requestHeaders.setContentType('multipart/form-data;', false); // mobile/desktop app frameworks
+      }
     }
 
     let request = new XMLHttpRequest();
@@ -10259,7 +10302,7 @@ function mergeConfig(config1, config2) {
     headers: (a, b) => mergeDeepProperties(headersToObject(a), headersToObject(b), true)
   };
 
-  utils.forEach(Object.keys(config1).concat(Object.keys(config2)), function computeConfigValue(prop) {
+  utils.forEach(Object.keys(Object.assign({}, config1, config2)), function computeConfigValue(prop) {
     const merge = mergeMap[prop] || mergeDeepProperties;
     const configValue = merge(config1[prop], config2[prop], prop);
     (utils.isUndefined(configValue) && merge !== mergeDirectKeys) || (config[prop] = configValue);
