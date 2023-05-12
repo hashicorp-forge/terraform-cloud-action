@@ -11378,10 +11378,31 @@ function formatOutputs(sv) {
     }, {});
     return JSON.stringify(outputsByKey);
 }
+function redactRecursive(value) {
+    if (value == null || typeof value === "boolean") {
+        return;
+    }
+    if (Array.isArray(value)) {
+        value.forEach(redactRecursive);
+    }
+    else if (value instanceof Object && value != null) {
+        // We expect object output to be a JSON value, so there's no
+        // need to ensure this is a "hasOwnProperty" prop
+        for (const prop in value) {
+            redactRecursive(value[prop]);
+        }
+    }
+    else if (typeof value === "string") {
+        core.setSecret(value);
+    }
+    else if (typeof value === "number") {
+        core.setSecret(JSON.stringify(value));
+    }
+}
 function redactSecrets(sv) {
     sv.forEach(v => {
         if (v.attributes.sensitive) {
-            core.setSecret(JSON.stringify(v.attributes.value));
+            redactRecursive(v.attributes.value);
         }
     });
 }

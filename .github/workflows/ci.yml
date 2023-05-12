@@ -44,6 +44,10 @@ jobs:
           [[ $(jq -n "$JSON_DATA" | jq .tuple[0] -re) = "hello" ]] && echo PASS || (echo FAIL && exit 1)
           [[ $(jq -n "$JSON_DATA" | jq .tuple[1] -re) = "list" ]] && echo PASS || (echo FAIL && exit 1)
           [[ $(jq -n "$JSON_DATA" | jq .object.hello -re) = "object" ]] && echo PASS || (echo FAIL && exit 1)
+          echo "The following lines should be redacted! (You should see *** and nothing else)"
+          jq -n "$JSON_DATA" | jq .secretobject.hello[0] -re
+          jq -n "$JSON_DATA" | jq .secretobject.hello[1] -re
+          jq -n "$JSON_DATA" | jq .secretstring -re
 
   destroy-infra:
     runs-on: ubuntu-latest
