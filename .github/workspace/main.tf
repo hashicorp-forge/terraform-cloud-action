@@ -24,3 +24,15 @@ output "object" {
     hello = "object"
   }
 }
+
+output "secretobject" {
+  value = {
+    hello = ["very-secret-value", "absolutely-secret"]
+  }
+  sensitive = true
+}
+
+output "secretstring" {
+  value = "top-secret"
+  sensitive = true
+}
