@@ -25,7 +25,7 @@ export const newMockTFEClient = (): MockTFEClient => {
 
   adapter
     .onGet(
-      `https://app.terraform.io/api/v2/organizations/hashicorp/workspaces/foobar`
+      `https://app.terraform.io/api/v2/organizations/hashicorp/workspaces/foobar`,
     )
     .reply(200, require("./test-fixtures/read-workspace.json"));
 
@@ -35,7 +35,7 @@ export const newMockTFEClient = (): MockTFEClient => {
 
   adapter
     .onGet(
-      `https://app.terraform.io/api/v2/workspaces/${defaultWorkspaceID}/current-state-version`
+      `https://app.terraform.io/api/v2/workspaces/${defaultWorkspaceID}/current-state-version`,
     )
     .reply(200, require("./test-fixtures/read-state-version.json"));
 

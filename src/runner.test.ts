@@ -66,7 +66,7 @@ describe("Runner", () => {
       // run object
       mockRunner.tfeClient.adapter
         .onGet(
-          `https://app.terraform.io/api/v2/runs/${mockRunner.tfeClient.defaultRunID}`
+          `https://app.terraform.io/api/v2/runs/${mockRunner.tfeClient.defaultRunID}`,
         )
         .replyOnce(200, run);
     }, 5000);
@@ -103,7 +103,7 @@ describe("Runner", () => {
       // run object
       mockRunner.tfeClient.adapter
         .onGet(
-          `https://app.terraform.io/api/v2/runs/${mockRunner.tfeClient.defaultRunID}`
+          `https://app.terraform.io/api/v2/runs/${mockRunner.tfeClient.defaultRunID}`,
         )
         .replyOnce(200, run);
     }, 5000);
@@ -112,7 +112,7 @@ describe("Runner", () => {
       .createRun(mockRunner.defaultRunOpts)
       .catch(err => {
         expect(err.message).toMatch(
-          /run exited unexpectedly with status: errored/
+          /run exited unexpectedly with status: errored/,
         );
       })
       .finally(() => {

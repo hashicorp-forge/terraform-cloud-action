@@ -56,7 +56,7 @@ function configureClient(): TFEClient {
     const client = configureClient();
     const workspace = await client.readWorkspace(
       core.getInput("organization"),
-      core.getInput("workspace")
+      core.getInput("workspace"),
     );
     const sv = await client.readCurrentStateVersion(workspace);
 

@@ -83,16 +83,16 @@ export class TFEClient {
 
   public async readWorkspace(
     organization: string,
-    workspace: string
+    workspace: string,
   ): Promise<WorkspaceShowResponse> {
     try {
       const path = `/api/v2/organizations/${querystring.escape(
-        organization
+        organization,
       )}/workspaces/${querystring.escape(workspace)}`;
 
       log.debug(`client readWorkspace ${path}`);
       const workspaceResponse = await this.client.get<WorkspaceShowResponse>(
-        path
+        path,
       );
 
       log.debug(`client readWorkspace success`);
@@ -103,7 +103,7 @@ export class TFEClient {
   }
 
   public async readCurrentStateVersion(
-    workspaceResponse: WorkspaceShowResponse
+    workspaceResponse: WorkspaceShowResponse,
   ): Promise<CurrentStateVersionWithOutputsResponse> {
     const path =
       workspaceResponse.data.relationships["current-state-version"].links
@@ -177,7 +177,7 @@ export class TFEClient {
       return resp.data;
     } catch (err) {
       throw new Error(
-        `Failed to create run on workspace ${opts.workspaceID}: ${err.message}`
+        `Failed to create run on workspace ${opts.workspaceID}: ${err.message}`,
       );
     }
   }
