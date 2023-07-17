@@ -37,7 +37,7 @@ const REQUIRED_VARIABLES = ["organization", "workspace", "token"];
 
     const ws = await client.readWorkspace(
       core.getInput("organization"),
-      core.getInput("workspace")
+      core.getInput("workspace"),
     );
     const runner = new Runner(client, ws);
     let run = await runner.createRun(configureRunCreateOptions(ws.data.id));

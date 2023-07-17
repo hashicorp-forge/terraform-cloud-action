@@ -55,14 +55,14 @@ export class Runner {
         case "errored":
         case "discarded":
           throw new Error(
-            `run exited unexpectedly with status: ${run.data.attributes.status}`
+            `run exited unexpectedly with status: ${run.data.attributes.status}`,
           );
         case "planned_and_finished":
         case "applied":
           break poll; // Without label, only breaks the switch statement
       }
       log.info(
-        `Waiting for run ${run.data.id} to complete, status was '${run.data.attributes.status}'...`
+        `Waiting for run ${run.data.id} to complete, status was '${run.data.attributes.status}'...`,
       );
       await sleep(pollIntervalRunMs);
       run = await this.client.readRun(run.data.id);
