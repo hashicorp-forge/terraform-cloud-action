@@ -11142,6 +11142,8 @@ function shouldRetry(_x, _x2, _x3, _x4) {
  *        A function to determine the delay between retry requests
  * @param {Function} [defaultOptions.onRetry=()=>{}]
  *        A function to get notified when a retry occurs
+ * @return {{ requestInterceptorId: number, responseInterceptorId: number }}
+ *        The ids of the interceptors added to the request and to the response (so they can be ejected at a later time)
  */
 
 
@@ -11165,12 +11167,12 @@ function _shouldRetry() {
 }
 
 function axiosRetry(axios, defaultOptions) {
-  axios.interceptors.request.use(config => {
+  var requestInterceptorId = axios.interceptors.request.use(config => {
     var currentState = getCurrentState(config);
     currentState.lastRequestTime = Date.now();
     return config;
   });
-  axios.interceptors.response.use(null, /*#__PURE__*/function () {
+  var responseInterceptorId = axios.interceptors.response.use(null, /*#__PURE__*/function () {
     var _ref = _asyncToGenerator(function* (error) {
       var {
         config
@@ -11219,6 +11221,10 @@ function axiosRetry(axios, defaultOptions) {
       return _ref.apply(this, arguments);
     };
   }());
+  return {
+    requestInterceptorId,
+    responseInterceptorId
+  };
 } // Compatibility with CommonJS
 
 axiosRetry.isNetworkError = isNetworkError;
