@@ -91,9 +91,8 @@ export class TFEClient {
       )}/workspaces/${querystring.escape(workspace)}`;
 
       log.debug(`client readWorkspace ${path}`);
-      const workspaceResponse = await this.client.get<WorkspaceShowResponse>(
-        path,
-      );
+      const workspaceResponse =
+        await this.client.get<WorkspaceShowResponse>(path);
 
       log.debug(`client readWorkspace success`);
       return workspaceResponse.data;
