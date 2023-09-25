@@ -10967,9 +10967,11 @@ var namespace = 'axios-retry';
  */
 
 function isNetworkError(error) {
+  var CODE_EXCLUDE_LIST = ['ERR_CANCELED', 'ECONNABORTED'];
   return !error.response && Boolean(error.code) && // Prevents retrying cancelled requests
-  error.code !== 'ECONNABORTED' && // Prevents retrying timed out requests
-  is_retry_allowed(error); // Prevents retrying unsafe errors
+  !CODE_EXCLUDE_LIST.includes(error.code) && // Prevents retrying timed out & cancelled requests
+  is_retry_allowed(error) // Prevents retrying unsafe errors
+  ;
 }
 var SAFE_HTTP_METHODS = ['get', 'head', 'options'];
 var IDEMPOTENT_HTTP_METHODS = SAFE_HTTP_METHODS.concat(['put', 'delete']);
