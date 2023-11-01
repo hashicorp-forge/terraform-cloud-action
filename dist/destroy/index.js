@@ -11232,7 +11232,7 @@ function axiosRetry(axios, defaultOptions) {
         }
 
         config.transformRequest = [data => data];
-        onRetry(currentState.retryCount, error, config);
+        yield onRetry(currentState.retryCount, error, config);
         return new Promise(resolve => setTimeout(() => resolve(axios(config)), delay));
       }
 
