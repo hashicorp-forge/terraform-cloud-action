@@ -8550,7 +8550,7 @@ var follow_redirects = __nccwpck_require__(7707);
 ;// CONCATENATED MODULE: external "zlib"
 const external_zlib_namespaceObject = require("zlib");
 ;// CONCATENATED MODULE: ./node_modules/axios/lib/env/data.js
-const VERSION = "1.6.1";
+const VERSION = "1.6.2";
 ;// CONCATENATED MODULE: ./node_modules/axios/lib/helpers/parseProtocol.js
 
 
@@ -9768,55 +9768,45 @@ const __setProxy = (/* unused pure expression or super */ null && (setProxy));
 
 
 
-
-
 /* harmony default export */ const cookies = (platform.hasStandardBrowserEnv ?
 
-// Standard browser envs support document.cookie
-  (function standardBrowserEnv() {
-    return {
-      write: function write(name, value, expires, path, domain, secure) {
-        const cookie = [];
-        cookie.push(name + '=' + encodeURIComponent(value));
+  // Standard browser envs support document.cookie
+  {
+    write(name, value, expires, path, domain, secure) {
+      const cookie = [name + '=' + encodeURIComponent(value)];
 
-        if (utils.isNumber(expires)) {
-          cookie.push('expires=' + new Date(expires).toGMTString());
-        }
+      utils.isNumber(expires) && cookie.push('expires=' + new Date(expires).toGMTString());
 
-        if (utils.isString(path)) {
-          cookie.push('path=' + path);
-        }
+      utils.isString(path) && cookie.push('path=' + path);
 
-        if (utils.isString(domain)) {
-          cookie.push('domain=' + domain);
-        }
+      utils.isString(domain) && cookie.push('domain=' + domain);
 
-        if (secure === true) {
-          cookie.push('secure');
-        }
+      secure === true && cookie.push('secure');
 
-        document.cookie = cookie.join('; ');
-      },
+      document.cookie = cookie.join('; ');
+    },
 
-      read: function read(name) {
-        const match = document.cookie.match(new RegExp('(^|;\\s*)(' + name + ')=([^;]*)'));
-        return (match ? decodeURIComponent(match[3]) : null);
-      },
+    read(name) {
+      const match = document.cookie.match(new RegExp('(^|;\\s*)(' + name + ')=([^;]*)'));
+      return (match ? decodeURIComponent(match[3]) : null);
+    },
 
-      remove: function remove(name) {
-        this.write(name, '', Date.now() - 86400000);
-      }
-    };
-  })() :
+    remove(name) {
+      this.write(name, '', Date.now() - 86400000);
+    }
+  }
 
-// Non standard browser env (web workers, react-native) lack needed support.
-  (function nonStandardBrowserEnv() {
-    return {
-      write: function write() {},
-      read: function read() { return null; },
-      remove: function remove() {}
-    };
-  })());
+  :
+
+  // Non-standard browser env (web workers, react-native) lack needed support.
+  {
+    write() {},
+    read() {
+      return null;
+    },
+    remove() {}
+  });
+
 
 ;// CONCATENATED MODULE: ./node_modules/axios/lib/helpers/isURLSameOrigin.js
 
@@ -9834,7 +9824,7 @@ const __setProxy = (/* unused pure expression or super */ null && (setProxy));
     let originURL;
 
     /**
-    * Parse a URL to discover it's components
+    * Parse a URL to discover its components
     *
     * @param {String} url The URL to be parsed
     * @returns {Object}
@@ -9939,7 +9929,7 @@ const isXHRAdapterSupported = typeof XMLHttpRequest !== 'undefined';
   return new Promise(function dispatchXhrRequest(resolve, reject) {
     let requestData = config.data;
     const requestHeaders = core_AxiosHeaders.from(config.headers).normalize();
-    const responseType = config.responseType;
+    let {responseType, withXSRFToken} = config;
     let onCanceled;
     function done() {
       if (config.cancelToken) {
@@ -10075,13 +10065,16 @@ const isXHRAdapterSupported = typeof XMLHttpRequest !== 'undefined';
     // Add xsrf header
     // This is only done if running in a standard browser environment.
     // Specifically not if we're in a web worker, or react-native.
-    if (platform.hasStandardBrowserEnv) {
-      // Add xsrf header
-      // regarding CVE-2023-45857 config.withCredentials condition was removed temporarily
-      const xsrfValue = isURLSameOrigin(fullPath) && config.xsrfCookieName && cookies.read(config.xsrfCookieName);
+    if(platform.hasStandardBrowserEnv) {
+      withXSRFToken && utils.isFunction(withXSRFToken) && (withXSRFToken = withXSRFToken(config));
 
-      if (xsrfValue) {
-        requestHeaders.set(config.xsrfHeaderName, xsrfValue);
+      if (withXSRFToken || (withXSRFToken !== false && isURLSameOrigin(fullPath))) {
+        // Add xsrf header
+        const xsrfValue = config.xsrfHeaderName && config.xsrfCookieName && cookies.read(config.xsrfCookieName);
+
+        if (xsrfValue) {
+          requestHeaders.set(config.xsrfHeaderName, xsrfValue);
+        }
       }
     }
 
@@ -10386,6 +10379,7 @@ function mergeConfig(config1, config2) {
     timeout: defaultToConfig2,
     timeoutMessage: defaultToConfig2,
     withCredentials: defaultToConfig2,
+    withXSRFToken: defaultToConfig2,
     adapter: defaultToConfig2,
     responseType: defaultToConfig2,
     xsrfCookieName: defaultToConfig2,
@@ -11141,28 +11135,38 @@ function exponentialDelay() {
 
   return delay + randomSum;
 }
-/**
- * Initializes and returns the retry state for the given request/config
- * @param  {AxiosRequestConfig} config
- * @return {Object}
- */
+/** @type {IAxiosRetryConfig} */
 
-function getCurrentState(config) {
-  var currentState = config[namespace] || {};
-  currentState.retryCount = currentState.retryCount || 0;
-  config[namespace] = currentState;
-  return currentState;
-}
+var DEFAULT_OPTIONS = {
+  retries: 3,
+  retryCondition: isNetworkOrIdempotentRequestError,
+  retryDelay: noDelay,
+  shouldResetTimeout: false,
+  onRetry: () => {}
+};
 /**
  * Returns the axios-retry options for the current request
  * @param  {AxiosRequestConfig} config
- * @param  {AxiosRetryConfig} defaultOptions
- * @return {AxiosRetryConfig}
+ * @param  {IAxiosRetryConfig} defaultOptions
+ * @return {IAxiosRetryConfigExtended}
+ */
+
+function getRequestOptions(config, defaultOptions) {
+  return _objectSpread(_objectSpread(_objectSpread({}, DEFAULT_OPTIONS), defaultOptions), config[namespace]);
+}
+/**
+ * Initializes and returns the retry state for the given request/config
+ * @param  {AxiosRequestConfig} config
+ * @param  {IAxiosRetryConfig} defaultOptions
+ * @return {IAxiosRetryConfigExtended}
  */
 
 
-function getRequestOptions(config, defaultOptions) {
-  return _objectSpread(_objectSpread({}, defaultOptions), config[namespace]);
+function getCurrentState(config, defaultOptions) {
+  var currentState = getRequestOptions(config, defaultOptions);
+  currentState.retryCount = currentState.retryCount || 0;
+  config[namespace] = currentState;
+  return currentState;
 }
 /**
  * @param  {Axios} axios
@@ -11184,16 +11188,14 @@ function fixConfig(axios, config) {
   }
 }
 /**
- * Checks retryCondition if request can be retried. Handles it's retruning value or Promise.
- * @param  {number} retries
- * @param  {Function} retryCondition
- * @param  {Object} currentState
+ * Checks retryCondition if request can be retried. Handles it's returning value or Promise.
+ * @param  {IAxiosRetryConfigExtended} currentState
  * @param  {Error} error
- * @return {boolean}
+ * @return {Promise<boolean>}
  */
 
 
-function shouldRetry(_x, _x2, _x3, _x4) {
+function shouldRetry(_x, _x2) {
   return _shouldRetry.apply(this, arguments);
 }
 /**
@@ -11255,7 +11257,11 @@ function shouldRetry(_x, _x2, _x3, _x4) {
 
 
 function _shouldRetry() {
-  _shouldRetry = _asyncToGenerator(function* (retries, retryCondition, currentState, error) {
+  _shouldRetry = _asyncToGenerator(function* (currentState, error) {
+    var {
+      retries,
+      retryCondition
+    } = currentState;
     var shouldRetryOrPromise = currentState.retryCount < retries && retryCondition(error); // This could be a promise
 
     if (typeof shouldRetryOrPromise === 'object') {
@@ -11275,7 +11281,7 @@ function _shouldRetry() {
 
 function axiosRetry(axios, defaultOptions) {
   var requestInterceptorId = axios.interceptors.request.use(config => {
-    var currentState = getCurrentState(config);
+    var currentState = getCurrentState(config, defaultOptions);
     currentState.lastRequestTime = Date.now();
     return config;
   });
@@ -11289,17 +11295,15 @@ function axiosRetry(axios, defaultOptions) {
         return Promise.reject(error);
       }
 
-      var {
-        retries = 3,
-        retryCondition = isNetworkOrIdempotentRequestError,
-        retryDelay = noDelay,
-        shouldResetTimeout = false,
-        onRetry = () => {}
-      } = getRequestOptions(config, defaultOptions);
-      var currentState = getCurrentState(config);
+      var currentState = getCurrentState(config, defaultOptions);
 
-      if (yield shouldRetry(retries, retryCondition, currentState, error)) {
+      if (yield shouldRetry(currentState, error)) {
         currentState.retryCount += 1;
+        var {
+          retryDelay,
+          shouldResetTimeout,
+          onRetry
+        } = currentState;
         var delay = retryDelay(currentState.retryCount, error); // Axios fails merging this configuration to the default configuration because it has an issue
         // with circular structures: https://github.com/mzabriskie/axios/issues/370
 
@@ -11324,7 +11328,7 @@ function axiosRetry(axios, defaultOptions) {
       return Promise.reject(error);
     });
 
-    return function (_x5) {
+    return function (_x3) {
       return _ref.apply(this, arguments);
     };
   }());
