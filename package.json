@@ -20,7 +20,7 @@
     "axios-retry": "^4.0.0"
   },
   "devDependencies": {
-    "@types/jest": "^29.5.11",
+    "@types/jest": "^29.5.12",
     "@vercel/ncc": "^0.38.1",
     "axios-mock-adapter": "^1.22.0",
     "husky": "^9.0.11",
