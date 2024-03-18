@@ -3445,6 +3445,7 @@ var preservedUrlFields = [
   "protocol",
   "query",
   "search",
+  "hash",
 ];
 
 // Create handlers that pass events from native requests
@@ -3878,7 +3879,7 @@ RedirectableRequest.prototype._processResponse = function (response) {
      redirectUrl.protocol !== "https:" ||
      redirectUrl.host !== currentHost &&
      !isSubdomain(redirectUrl.host, currentHost)) {
-    removeMatchingHeaders(/^(?:authorization|cookie)$/i, this._options.headers);
+    removeMatchingHeaders(/^(?:(?:proxy-)?authorization|cookie)$/i, this._options.headers);
   }
 
   // Evaluate the beforeRedirect callback
@@ -8594,7 +8595,7 @@ var follow_redirects = __nccwpck_require__(7707);
 ;// CONCATENATED MODULE: external "zlib"
 const external_zlib_namespaceObject = require("zlib");
 ;// CONCATENATED MODULE: ./node_modules/axios/lib/env/data.js
-const VERSION = "1.6.7";
+const VERSION = "1.6.8";
 ;// CONCATENATED MODULE: ./node_modules/axios/lib/helpers/parseProtocol.js
 
 
@@ -9311,7 +9312,7 @@ const buildAddressEntry = (address, family) => resolveFamily(utils.isObject(addr
     }
 
     // temporary internal emitter until the AxiosRequest class will be implemented
-    const emitter = new external_events_();
+    const emitter = new external_events_.EventEmitter();
 
     const onFinished = () => {
       if (config.cancelToken) {
@@ -10355,7 +10356,7 @@ function dispatchRequest(config) {
 
 
 
-const headersToObject = (thing) => thing instanceof core_AxiosHeaders ? thing.toJSON() : thing;
+const headersToObject = (thing) => thing instanceof core_AxiosHeaders ? { ...thing } : thing;
 
 /**
  * Config-specific merge-function which creates a new config-object
