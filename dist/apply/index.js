@@ -11167,7 +11167,8 @@ const DEFAULT_OPTIONS = {
     retryCondition: isNetworkOrIdempotentRequestError,
     retryDelay: noDelay,
     shouldResetTimeout: false,
-    onRetry: () => { }
+    onRetry: () => { },
+    onMaxRetryTimesExceeded: () => { }
 };
 function getRequestOptions(config, defaultOptions) {
     return { ...DEFAULT_OPTIONS, ...defaultOptions, ...config[namespace] };
@@ -11208,6 +11209,10 @@ async function shouldRetry(currentState, error) {
     }
     return shouldRetryOrPromise;
 }
+async function handleMaxRetryTimesExceeded(currentState, error) {
+    if (currentState.retryCount >= currentState.retries)
+        await currentState.onMaxRetryTimesExceeded(error, currentState.retryCount);
+}
 const axiosRetry = (axiosInstance, defaultOptions) => {
     const requestInterceptorId = axiosInstance.interceptors.request.use((config) => {
         setCurrentState(config, defaultOptions);
@@ -11241,6 +11246,7 @@ const axiosRetry = (axiosInstance, defaultOptions) => {
                 setTimeout(() => resolve(axiosInstance(config)), delay);
             });
         }
+        await handleMaxRetryTimesExceeded(currentState, error);
         return Promise.reject(error);
     });
     return { requestInterceptorId, responseInterceptorId };
