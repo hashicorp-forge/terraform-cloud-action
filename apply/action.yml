@@ -3,7 +3,7 @@
 
 name: Terraform Cloud Apply
 runs:
-  using: 'node16'
+  using: 'node20'
   main: '../dist/apply/index.js'
 inputs:
   hostname:
