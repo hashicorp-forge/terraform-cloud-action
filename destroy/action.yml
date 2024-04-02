@@ -3,7 +3,7 @@
 
 name: Terraform Cloud Destroy
 runs:
-  using: 'node16'
+  using: 'node20'
   main: '../dist/destroy/index.js'
 inputs:
   hostname:

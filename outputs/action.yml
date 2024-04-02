@@ -3,7 +3,7 @@
 
 name: Terraform Cloud Outputs
 runs:
-  using: 'node16'
+  using: 'node20'
   main: '../dist/outputs/index.js'
 inputs:
   hostname:
