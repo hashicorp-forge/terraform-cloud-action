@@ -10,7 +10,7 @@ jobs:
     runs-on: "ubuntu-latest"
     name: "E2E Mock Infra"
     steps:
-      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b
+      - uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
 
       - uses: ./apply
         id: run
@@ -26,7 +26,7 @@ jobs:
     name: "E2E Test Outputs"
     needs: [ mockinfra ]
     steps:
-      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b
+      - uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
 
       - name: Fetch outputs
         id: fetch
@@ -55,7 +55,7 @@ jobs:
     name: E2E Destroy Infra
     needs: [ e2e ]
     steps:
-      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b
+      - uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
 
       - name: Destroy mock infra
         uses: ./destroy
@@ -69,7 +69,7 @@ jobs:
     runs-on: "ubuntu-latest"
     name: "Lint & Test"
     steps:
-      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b
+      - uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
 
       - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
