@@ -1,15 +1,15 @@
 # Apply action
 
-A GitHub Action that creates an apply (or destroy) run in a Terraform Cloud workspace. Use this in conjunction with the [outputs action](../outputs) to assemble GitHub Action pipelines using infrastructure managed by Terraform Cloud.
+A GitHub Action that creates an apply (or destroy) run in an HCP Terraform workspace. Use this in conjunction with the [outputs action](../outputs) to assemble GitHub Action pipelines using infrastructure managed by HCP Terraform.
 
 ## Documentation
 
 ### Inputs
 
-- `token` (**Required**): Terraform Cloud API access token
+- `token` (**Required**): HCP Terraform API access token
 - `organization` (**Required**): The organization
 - `workspace` (**Required**): The name of the workspace
-- `hostname` (**Optional**): The hostname (if not using Terraform Cloud) of the Terraform Enterprise instance. Defaults to `app.terraform.io`
+- `hostname` (**Optional**): The hostname (if not using HCP Terraform) of the Terraform Enterprise instance. Defaults to `app.terraform.io`
 - `wait` (**Optional**): If set, waits for the run to terminate and resources to be processed before the action finishes. Defaults to true.
 - `auto-apply` (**Optional**): If set, applies changes when a Terraform plan is successful. Defaults to true.
 - `is-destroy` (**Optional**): If set, a destroy plan will be run. Defaults to false.

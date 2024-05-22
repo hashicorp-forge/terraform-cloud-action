@@ -1,20 +1,20 @@
 # Outputs action
 
-A GitHub Action step that fetches outputs from a Terraform Cloud workspace.
+A GitHub Action step that fetches outputs from an HCP Terraform workspace.
 
 ## Documentation
 ---
 
 ### Inputs
 
-- `token` (**Required**): Terraform Cloud API access token
+- `token` (**Required**): HCP Terraform API access token
 - `organization` (**Required**): The organization
 - `workspace` (**Required**): The name of the workspace
-- `hostname` (**Optional**): The hostname (if not using Terraform Cloud) of the Terraform Enterprise instance. Defaults to `app.terraform.io`
+- `hostname` (**Optional**): The hostname (if not using HCP Terraform) of the Terraform Enterprise instance. Defaults to `app.terraform.io`
 
 ### Outputs
 
-- `workspace-outputs-json`: A JSON-stringified object containing the outputs fetched from the specified Terraform Cloud workspace. Output names will match those found in your workspace. Sensitive output values will be redacted from runner logs.
+- `workspace-outputs-json`: A JSON-stringified object containing the outputs fetched from the specified HCP Terraform workspace. Output names will match those found in your workspace. Sensitive output values will be redacted from runner logs.
 
 **Example Output Value**
 

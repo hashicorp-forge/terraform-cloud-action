@@ -1,31 +1,33 @@
 # Copyright (c) HashiCorp, Inc.
 # SPDX-License-Identifier: MPL-2.0
 
-name: Terraform Cloud Destroy
+name: HCP Terraform Destroy
+description: "Creates a standard destroy run on the specified HCP Terraform/Terraform Enterprise workspace"
 runs:
-  using: 'node20'
-  main: '../dist/destroy/index.js'
+  using: "node20"
+  main: "../dist/destroy/index.js"
 inputs:
   hostname:
     required: false
-    default: 'app.terraform.io'
+    default: "app.terraform.io"
+    description: "The Terraform Enterprise hostname. Defaults to app.terraform.io (HCP Terraform)."
   token:
-    description: "The Terraform Cloud/Terraform Enterprise access token."
+    description: "The HCP Terraform/Terraform Enterprise access token."
     required: true
   organization:
-    description: "The Terraform Cloud/Terraform Enterprise organization that owns the specified workspace."
+    description: "The HCP Terraform/Terraform Enterprise organization that owns the specified workspace."
     required: true
   workspace:
-    description: "The Terraform Cloud/Terraform Enterprise workspace to fetch outputs from."
+    description: "The HCP Terraform/Terraform Enterprise workspace to fetch outputs from."
     required: true
   wait:
     description: "If set, waits for the run to terminate and resources to be processed before the action finishes. Defaults to false."
     required: false
-    default: false
+    default: "false"
   auto-apply:
     description: "If set, applies changes when a Terraform plan is successful. Defaults to true."
     required: false
-    default: true
+    default: "true"
   message:
     required: false
     description: "A custom message to associate with the run."

@@ -1,10 +1,10 @@
-# Terraform Cloud actions
+# HCP Terraform actions
 
 - [apply](apply/): Create a plan and apply run and optionally auto-apply it and wait for it to complete using the latest configuration version of a workspace.
 - [outputs](outputs/): Get the outputs from a workspace.
 - [destroy](destroy/): Create a destroy run and optionally auto-apply it and wait for it to complete.
 
-Using these three actions, you can assemble a workflow to create, use, and destroy infrastructure managed by Terraform Cloud.
+Using these three actions, you can assemble a workflow to create, use, and destroy infrastructure managed by HCP Terraform.
 
 ## Example Usage
 

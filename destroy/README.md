@@ -1,15 +1,15 @@
 # Destroy action
 
-A GitHub Action that creates a destroy run in a Terraform Cloud workspace. Usually used to tear down infrastructure that you created with the apply action.
+A GitHub Action that creates a destroy run in an HCP Terraform workspace. Usually used to tear down infrastructure that you created with the apply action.
 
 ## Documentation
 
 ### Inputs
 
-- `token` (**Required**): Terraform Cloud API access token
+- `token` (**Required**): HCP Terraform API access token
 - `organization` (**Required**): The organization
 - `workspace` (**Required**): The name of the workspace
-- `hostname` (**Optional**): The hostname (if not using Terraform Cloud) of the Terraform Enterprise instance. Defaults to `app.terraform.io`
+- `hostname` (**Optional**): The hostname (if not using HCP Terraform) of the Terraform Enterprise instance. Defaults to `app.terraform.io`
 - `wait` (**Optional**): If set, waits for the run to terminate and resources to be processed before the action finishes. Defaults to false.
 - `auto-apply` (**Optional**): If set, applies changes when a Terraform plan is successful. Defaults to true.
 - `message` (**Optional**): A custom message to associate with the run. Default to "Run created by GitHub action"
