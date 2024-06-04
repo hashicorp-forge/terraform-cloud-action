@@ -8618,7 +8618,7 @@ var follow_redirects = __nccwpck_require__(7707);
 ;// CONCATENATED MODULE: external "zlib"
 const external_zlib_namespaceObject = require("zlib");
 ;// CONCATENATED MODULE: ./node_modules/axios/lib/env/data.js
-const VERSION = "1.7.1";
+const VERSION = "1.7.2";
 ;// CONCATENATED MODULE: ./node_modules/axios/lib/helpers/parseProtocol.js
 
 
@@ -10470,11 +10470,11 @@ const fetchProgressDecorator = (total, fn) => {
   }));
 }
 
-const isFetchSupported = typeof fetch !== 'undefined';
-const isReadableStreamSupported = isFetchSupported && typeof ReadableStream !== 'undefined';
+const isFetchSupported = typeof fetch === 'function' && typeof Request === 'function' && typeof Response === 'function';
+const isReadableStreamSupported = isFetchSupported && typeof ReadableStream === 'function';
 
 // used only inside the fetch adapter
-const encodeText = isFetchSupported && (typeof TextEncoder !== 'undefined' ?
+const encodeText = isFetchSupported && (typeof TextEncoder === 'function' ?
     ((encoder) => (str) => encoder.encode(str))(new TextEncoder()) :
     async (str) => new Uint8Array(await new Response(str).arrayBuffer())
 );
@@ -11572,7 +11572,8 @@ const DEFAULT_OPTIONS = {
     retryDelay: noDelay,
     shouldResetTimeout: false,
     onRetry: () => { },
-    onMaxRetryTimesExceeded: () => { }
+    onMaxRetryTimesExceeded: () => { },
+    validateResponse: null
 };
 function getRequestOptions(config, defaultOptions) {
     return { ...DEFAULT_OPTIONS, ...defaultOptions, ...config[namespace] };
@@ -11613,6 +11614,36 @@ async function shouldRetry(currentState, error) {
     }
     return shouldRetryOrPromise;
 }
+async function handleRetry(axiosInstance, currentState, error, config) {
+    currentState.retryCount += 1;
+    const { retryDelay, shouldResetTimeout, onRetry } = currentState;
+    const delay = retryDelay(currentState.retryCount, error);
+    // Axios fails merging this configuration to the default configuration because it has an issue
+    // with circular structures: https://github.com/mzabriskie/axios/issues/370
+    fixConfig(axiosInstance, config);
+    if (!shouldResetTimeout && config.timeout && currentState.lastRequestTime) {
+        const lastRequestDuration = Date.now() - currentState.lastRequestTime;
+        const timeout = config.timeout - lastRequestDuration - delay;
+        if (timeout <= 0) {
+            return Promise.reject(error);
+        }
+        config.timeout = timeout;
+    }
+    config.transformRequest = [(data) => data];
+    await onRetry(currentState.retryCount, error, config);
+    if (config.signal?.aborted) {
+        return Promise.resolve(axiosInstance(config));
+    }
+    return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => resolve(axiosInstance(config)), delay);
+        if (config.signal?.addEventListener) {
+            config.signal.addEventListener('abort', () => {
+                clearTimeout(timeout);
+                resolve(axiosInstance(config));
+            }, { once: true });
+        }
+    });
+}
 async function handleMaxRetryTimesExceeded(currentState, error) {
     if (currentState.retryCount >= currentState.retries)
         await currentState.onMaxRetryTimesExceeded(error, currentState.retryCount);
@@ -11620,6 +11651,10 @@ async function handleMaxRetryTimesExceeded(currentState, error) {
 const axiosRetry = (axiosInstance, defaultOptions) => {
     const requestInterceptorId = axiosInstance.interceptors.request.use((config) => {
         setCurrentState(config, defaultOptions);
+        if (config[namespace]?.validateResponse) {
+            // by setting this, all HTTP responses will be go through the error interceptor first
+            config.validateStatus = () => false;
+        }
         return config;
     });
     const responseInterceptorId = axiosInstance.interceptors.response.use(null, async (error) => {
@@ -11629,26 +11664,12 @@ const axiosRetry = (axiosInstance, defaultOptions) => {
             return Promise.reject(error);
         }
         const currentState = setCurrentState(config, defaultOptions);
+        if (error.response && currentState.validateResponse?.(error.response)) {
+            // no issue with response
+            return error.response;
+        }
         if (await shouldRetry(currentState, error)) {
-            currentState.retryCount += 1;
-            const { retryDelay, shouldResetTimeout, onRetry } = currentState;
-            const delay = retryDelay(currentState.retryCount, error);
-            // Axios fails merging this configuration to the default configuration because it has an issue
-            // with circular structures: https://github.com/mzabriskie/axios/issues/370
-            fixConfig(axiosInstance, config);
-            if (!shouldResetTimeout && config.timeout && currentState.lastRequestTime) {
-                const lastRequestDuration = Date.now() - currentState.lastRequestTime;
-                const timeout = config.timeout - lastRequestDuration - delay;
-                if (timeout <= 0) {
-                    return Promise.reject(error);
-                }
-                config.timeout = timeout;
-            }
-            config.transformRequest = [(data) => data];
-            await onRetry(currentState.retryCount, error, config);
-            return new Promise((resolve) => {
-                setTimeout(() => resolve(axiosInstance(config)), delay);
-            });
+            return handleRetry(axiosInstance, currentState, error, config);
         }
         await handleMaxRetryTimesExceeded(currentState, error);
         return Promise.reject(error);
