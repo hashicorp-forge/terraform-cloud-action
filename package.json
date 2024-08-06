@@ -4,31 +4,26 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "build": "npm-run-all --parallel build:*",
-    "build:run": "ncc build -o dist/apply --license licenses.txt src/apply.ts",
-    "build:output": "ncc build -o dist/outputs --license licenses.txt src/outputs.ts",
-    "build:destroy": "ncc build -o dist/destroy --license licenses.txt src/destroy.ts",
+    "build": "tsup src/apply.ts src/outputs.ts src/destroy.ts",
     "format": "prettier --write '**/*.ts'",
     "format-check": "prettier --check '**/*.ts'",
     "test": "jest",
-    "prepare": "husky install"
-  },
-  "dependencies": {
-    "@actions/core": "^1.10.1",
-    "@actions/exec": "^1.1.1",
-    "axios": "^1.7.2",
-    "axios-retry": "^4.4.1"
+    "prepare": "husky"
   },
   "devDependencies": {
+    "@actions/core": "^1.10.1",
+    "@actions/exec": "^1.1.1",
+    "axios": "^1.7.3",
+    "axios-retry": "^4.5.0",
+    
     "@types/jest": "^29.5.11",
-    "@vercel/ncc": "^0.38.1",
+    "tsup": "^8.2.4",
     "axios-mock-adapter": "^1.22.0",
-    "husky": "^9.0.11",
+    "husky": "^9.1.4",
     "jest": "^29.7.0",
-    "npm-run-all": "^4.1.5",
     "prettier": "^3.3.3",
-    "ts-jest": "^29.2.2",
-    "typescript": "^5.5.3"
+    "ts-jest": "^29.2.4",
+    "typescript": "^5.5.4"
   },
   "license": "MPL-2.0"
 }

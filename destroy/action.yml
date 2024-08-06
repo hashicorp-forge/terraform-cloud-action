@@ -5,7 +5,7 @@ name: HCP Terraform Destroy
 description: "Creates a standard destroy run on the specified HCP Terraform/Terraform Enterprise workspace"
 runs:
   using: "node20"
-  main: "../dist/destroy/index.js"
+  main: "../dist/destroy.js"
 inputs:
   hostname:
     required: false
