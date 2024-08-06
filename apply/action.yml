@@ -5,7 +5,7 @@ name: HCP Terraform Apply
 description: "Creates a standard plan/apply run on the specifed HCP Terraform/Terraform Enterprise workspace"
 runs:
   using: "node20"
-  main: "../dist/apply/index.js"
+  main: "../dist/apply.js"
 inputs:
   hostname:
     required: false

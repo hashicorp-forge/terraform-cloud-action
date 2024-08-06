@@ -5,7 +5,7 @@ name: HCP Terraform Outputs
 description: "Fetches the outputs of a HCP Terraform/Terraform Enterprise workspace"
 runs:
   using: "node20"
-  main: "../dist/outputs/index.js"
+  main: "../dist/outputs.js"
 inputs:
   hostname:
     required: false
