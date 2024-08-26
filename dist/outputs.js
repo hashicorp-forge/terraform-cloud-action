@@ -13458,7 +13458,10 @@ function AxiosError(message, code, config, request, response) {
   code && (this.code = code);
   config && (this.config = config);
   request && (this.request = request);
-  response && (this.response = response);
+  if (response) {
+    this.response = response;
+    this.status = response.status ? response.status : null;
+  }
 }
 utils_default.inherits(AxiosError, Error, {
   toJSON: function toJSON() {
@@ -13477,7 +13480,7 @@ utils_default.inherits(AxiosError, Error, {
       // Axios
       config: utils_default.toJSONObject(this.config),
       code: this.code,
-      status: this.response && this.response.status ? this.response.status : null
+      status: this.status
     };
   }
 });
@@ -13784,12 +13787,12 @@ __export(utils_exports, {
   hasBrowserEnv: () => hasBrowserEnv,
   hasStandardBrowserEnv: () => hasStandardBrowserEnv,
   hasStandardBrowserWebWorkerEnv: () => hasStandardBrowserWebWorkerEnv,
+  navigator: () => _navigator,
   origin: () => origin
 });
 var hasBrowserEnv = typeof window !== "undefined" && typeof document !== "undefined";
-var hasStandardBrowserEnv = ((product) => {
-  return hasBrowserEnv && ["ReactNative", "NativeScript", "NS"].indexOf(product) < 0;
-})(typeof navigator !== "undefined" && navigator.product);
+var _navigator = typeof navigator === "object" && navigator || void 0;
+var hasStandardBrowserEnv = hasBrowserEnv && (!_navigator || ["ReactNative", "NativeScript", "NS"].indexOf(_navigator.product) < 0);
 var hasStandardBrowserWebWorkerEnv = (() => {
   return typeof WorkerGlobalScope !== "undefined" && // eslint-disable-next-line no-undef
   self instanceof WorkerGlobalScope && typeof self.importScripts === "function";
@@ -14311,7 +14314,7 @@ var import_follow_redirects = __toESM(require_follow_redirects(), 1);
 var import_zlib = __toESM(require("zlib"), 1);
 
 // node_modules/axios/lib/env/data.js
-var VERSION = "1.7.3";
+var VERSION = "1.7.5";
 
 // node_modules/axios/lib/helpers/parseProtocol.js
 function parseProtocol(url2) {
@@ -14856,7 +14859,7 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config) {
         }
       }
       const fullPath = buildFullPath(config.baseURL, config.url);
-      const parsed = new URL(fullPath, "http://localhost");
+      const parsed = new URL(fullPath, platform_default.hasBrowserEnv ? platform_default.origin : void 0);
       const protocol = parsed.protocol || supportedProtocols[0];
       if (protocol === "data:") {
         let convertedData;
@@ -15223,7 +15226,7 @@ var isURLSameOrigin_default = platform_default.hasStandardBrowserEnv ? (
   // Standard browser envs have full support of the APIs needed to test
   // whether the request URL is of the same origin as current location.
   function standardBrowserEnv() {
-    const msie = /(msie|trident)/i.test(navigator.userAgent);
+    const msie = platform_default.navigator && /(msie|trident)/i.test(platform_default.navigator.userAgent);
     const urlParsingNode = document.createElement("a");
     let originURL;
     function resolveURL(url2) {
@@ -15750,13 +15753,14 @@ var fetch_default = isFetchSupported && ((config) => __async(void 0, null, funct
     if (!utils_default.isString(withCredentials)) {
       withCredentials = withCredentials ? "include" : "omit";
     }
+    const isCredentialsSupported = "credentials" in Request.prototype;
     request = new Request(url2, __spreadProps(__spreadValues({}, fetchOptions), {
       signal: composedSignal,
       method: method.toUpperCase(),
       headers: headers.normalize().toJSON(),
       body: data,
       duplex: "half",
-      credentials: withCredentials
+      credentials: isCredentialsSupported ? withCredentials : void 0
     }));
     let response = yield fetch(request);
     const isStreamResponse = supportsResponseStream && (responseType === "stream" || responseType === "response");
